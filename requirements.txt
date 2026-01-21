@@ -1,0 +1,16 @@
+# Core HTTP + parsing
+httpx>=0.27.0
+beautifulsoup4>=4.12.0
+lxml>=5.0.0
+
+# Browser automation (used conditionally)
+playwright>=1.42.0
+
+# Async utilities
+anyio>=4.0.0
+
+# Data handling (optional but implied by normalization)
+pandas>=2.2.0
+
+# Development / debugging (safe to remove later)
+python-dotenv>=1.0.0
