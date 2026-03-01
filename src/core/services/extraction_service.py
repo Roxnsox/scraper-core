@@ -1,68 +1,38 @@
-from typing import Iterable, Any, Dict, List
 from abc import ABC, abstractmethod
-from bs4 import BeautifulSoup
+from typing import Generic, Iterable, TypeVar
+
+T = TypeVar("T")
 
 
-class ExtractionService(ABC):
+class ExtractionService(ABC, Generic[T]):
     """
-    Abstract extraction service contract.
+    Core extraction service contract.
 
-    Domain-specific extraction services (e.g., NBAExtractionService)
-    should inherit from this class and implement `extract`.
+    This is a domain-facing abstraction that defines the boundary
+    between raw external data (HTML, JSON, etc.) and structured
+    intermediate representations used by the domain layer.
 
-    This defines the behavioral boundary used by the core orchestrator.
+    IMPORTANT:
+        - This file must contain NO infrastructure imports.
+        - This file must NOT depend on BeautifulSoup, httpx, Scrapy, etc.
+        - Concrete implementations belong in the adapters layer.
+
+    Responsibilities:
+        - Define the behavioral contract for extraction.
+        - Allow domain-specific extractors to implement structured output.
+        - Enable infrastructure adapters to remain swappable.
     """
 
     @abstractmethod
-    async def extract(self, raw_data: str) -> Iterable[Any]:
+    async def extract(self, raw_data: str) -> Iterable[T]:
         """
-        Transform raw input data into structured intermediate objects.
-        """
-        pass
+        Transform raw external data into structured intermediate objects.
 
-
-class GenericHTMLExtractionService(ExtractionService):
-    """
-    Generic infrastructural HTML extraction implementation.
-
-    This service:
-        - Parses raw HTML
-        - Applies configurable selectors
-        - Returns structured dictionaries
-
-    It contains:
-        - NO domain logic
-        - NO business rules
-        - NO source-specific assumptions
-
-    It is reusable infrastructure.
-    """
-
-    def __init__(self, row_selector: str, field_selectors: Dict[str, str]) -> None:
-        """
         Args:
-            row_selector: CSS selector identifying each data row.
-            field_selectors: Mapping of field name -> CSS selector (relative to row).
+            raw_data: Raw response payload (HTML, JSON, etc.)
+
+        Returns:
+            Iterable of structured intermediate objects suitable
+            for domain-level normalization.
         """
-        self.row_selector = row_selector
-        self.field_selectors = field_selectors
-
-    async def extract(self, raw_data: str) -> Iterable[Dict[str, Any]]:
-        soup = BeautifulSoup(raw_data, "html.parser")
-
-        rows = soup.select(self.row_selector)
-
-        extracted_items: List[Dict[str, Any]] = []
-
-        for row in rows:
-            item: Dict[str, Any] = {}
-
-            for field_name, selector in self.field_selectors.items():
-                element = row.select_one(selector)
-                item[field_name] = (
-                    element.get_text(strip=True) if element else None
-                )
-
-            extracted_items.append(item)
-
-        return extracted_items
+        raise NotImplementedError
